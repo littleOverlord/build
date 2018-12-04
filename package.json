@@ -1,0 +1,27 @@
+{
+  "name": "build",
+  "version": "0.18.1204",
+  "description": "build typescript project",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-packager . build --win --out ../build/dist --arch=x64 --app-version=0.18.1204 --electron-version=3.0.10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/littleOverlord/build.git"
+  },
+  "keywords": [
+    "typescript"
+  ],
+  "author": "tdd",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/littleOverlord/build/issues"
+  },
+  "homepage": "https://github.com/littleOverlord/build#readme",
+  "devDependencies": {
+    "electron": "^3.0.10",
+    "electron-packager": "^12.2.0"
+  }
+}
