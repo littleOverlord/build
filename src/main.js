@@ -28,7 +28,11 @@ const filterFile = function(p){
   let r = fs.readdirSync(p),cp;
   for(let i = r.length - 1; i >= 0; i--){
     cp = `${p}\\${r[i]}`;
-    if(!fs.existsSync(cp) || !fs.statSync(cp).isDirectory()){
+    try{
+      if(!fs.existsSync(cp) || !fs.statSync(cp).isDirectory()){
+        r.splice(i,1);
+      }
+    }catch(e){
       r.splice(i,1);
     }
   }

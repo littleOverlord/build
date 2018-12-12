@@ -1,13 +1,13 @@
 'use strict';
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, dialog } = require('electron')
 
 // 保持对window对象的全局引用，如果不这么做的话，当JavaScript对象被
 // 垃圾回收的时候，window对象将会自动的关闭
-let win
+let wins = [];
 
 function createWindow () {
   // 创建浏览器窗口。
-  win = new BrowserWindow({ width: 800, height: 600 })
+  const win = new BrowserWindow({ width: 800, height: 600 })
 
   // 然后加载应用的 index.html。
   win.loadFile('./src/index.html')
@@ -20,14 +20,25 @@ function createWindow () {
     // 取消引用 window 对象，如果你的应用支持多窗口的话，
     // 通常会把多个 window 对象存放在一个数组里面，
     // 与此同时，你应该删除相应的元素。
-    win = null
+    wins.splice(wins.indexOf(win),1);
   })
+  wins.push(win);
 }
 
 // Electron 会在初始化后并准备
 // 创建浏览器窗口时，调用这个函数。
 // 部分 API 在 ready 事件触发后才能使用。
-app.on('ready', createWindow)
+app.on('ready', function(){
+  // createWindow();
+  dialog.showOpenDialog({
+    properties: ['openDirectory']
+  }, function (files) {
+      if (files){
+        console.log(files);
+      }
+          
+  })
+})
 
 // 当全部窗口关闭时退出。
 app.on('window-all-closed', () => {
@@ -41,7 +52,8 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   // 在macOS上，当单击dock图标并且没有其他窗口打开时，
   // 通常在应用程序中重新创建一个窗口。
-  if (win === null) {
+  if (wins.length === 0) {
     createWindow()
   }
 })
+
