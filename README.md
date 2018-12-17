@@ -3,6 +3,9 @@
 ```
 npm install -g package --registry=https://registry.npm.taobao.org
 npm install gulp --save 或 npm install gulp -S
+
+npm pack 构建二进制包
+npm run pack 构建可执行包
 ```
 
 ### --save-dev和--save的区别: 

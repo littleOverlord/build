@@ -5,72 +5,25 @@
     <title>NI build</title>
     <style>
     *{margin:0;padding:0;}
+    li{list-style: none;}
+    .projects{padding-left:10px;}
+    .project li{display: block;padding:5px 0;line-height:20px;font-size:14px;}
+    .project li:hover{background-color: #eaeaea;}
     .selectButton{
-      position: absolute;
-      left: 50%;top:50%;
-      margin-left:-50px;margin-top:-25px;
+      margin: 0 auto;
       width:100px;height:50px;text-align:center;line-height:50px;border:1px solid #ccc;
     }
-    .selectOk,.selectButton{
+    .selectButton{
       cursor: pointer;
-    }
-    .selectOk:hover,.selectButton:hover{
-      background-color: #eaeaea;
-    }
-    .selectDir{
-      position: absolute;
-      display: none;
-      left:20px;
-      bottom:20px;
-      top:20px;
-      right:20px;
-      border:1px solid #ccc;
-      
-    }
-    .currPath{
-      height: 50px;
-      line-height: 50px;
-      text-indent: 10px;
-    }
-    .dirList{
-      position: absolute;
-      width:  100%;
-      left:0;
-      top:50px;
-      bottom:100px;
-      overflow: auto;
-    }
-    .selectOk{
-      position:absolute;
-      width:100px;
-      height:50px;
-      bottom:20px;
-      left: 50%;
-      margin-left:-50px;
-      text-align: center;
-      line-height:50px;
-      border:1px solid #ccc;
-    }
-    .dirList li{
-      padding:0 10px;
-      height:30px;
-      line-height: 30px;
-      color: #bbb;
-    }
-    .dirList li:hover{
-      background-color:#eaeaea;
     }
     </style>
   </head>
   <body>
-    <div class="selectButton" id="selectButton" onclick="openDir()">选择项目</div>
-    <div class="selectDir" id="selectDir">
-      <div class="currPath" id="currPath"></div>
-      <div class="dirList" id="dirList">
+    <h2 class="title">最近打开的项目：</h2>
+    <ul class="projects" id="projects">
 
-      </div>
-      <div class="selectOk" id="selectOk" onclick="selectOk()">确定</div>
-    </div>
-    <script src="./main.js"></script>
+    </ul>
+    <div class="selectButton" id="selectButton" onclick="openDir()">打开新项目</div>
+    <script src="./src/main.js"></script>
   </body>
 </html>
