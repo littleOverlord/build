@@ -17,7 +17,7 @@ console.log(process.cwd())
 const addProjects = () => {
   let s = '';
   for(let i = 0, len = projects.length;i < len; i++){
-    s += `<li onclick="selectOne('${projects[i]}')">${projects[i]}</li>`
+    s += `<li onclick="selectOne('${i}')">${projects[i]}</li>`
   }
   projectsNode.innerHTML = s;
 }
@@ -26,8 +26,8 @@ const addProjects = () => {
 //初始化项目列表
 addProjects();
 //绑定项目选择监听
-window.selectOne = (dir) => {
-  ipcRenderer.send('accept-new-dir',[dir]);
+window.selectOne = (index) => {
+  ipcRenderer.send('accept-new-dir',[projects[index]]);
 }
 //选择新项目
 window.openDir = () => {

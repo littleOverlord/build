@@ -37,6 +37,7 @@ const createWindow = (index,dir) => {
     console.log("wins.length = ",wins.length);
     if(wins.length == 1){
       wins[0].show();
+      // wins[0].reload();
     }
   })
   wins.push(win);
@@ -55,6 +56,7 @@ const createWindows = (arrs) => {
     projects.data.length = 10;
   }
   writeProjects();
+  
 }
 //获取历史项目
 const readProjects = () => {
@@ -94,13 +96,17 @@ const responseRequest = {
     // event.sender.send('send-new-dir', `${lastDir}&${arg}`);
     event.returnValue = lastDir.shift();
   },
-  openDir: () => {
+  openDir: (event,arg) => {
     dialog.showOpenDialog({
       properties: ['openDirectory']
     }, function (files) {
         if(files){
-          lastDir = files;
-          createWindows(lastDir);
+          if(!arg){
+            lastDir = files;
+            createWindows(lastDir);
+          }else{
+            event.sender.send('selectDirectory', files);
+          }
         }
     })
   }
@@ -134,9 +140,9 @@ app.on('activate', () => {
 })
 //监听渲染进程打开新文件夹的消息
 ipcMain.on('accept-new-dir', (event, arg) => {
-  console.log(arg) // prints "ping"
+  console.log("accept-new-dir",arg,arg.length) // prints "ping"
   lastDir = arg;
-  createWindow("./src/child.html");
+  // createWindow("./src/child.html");
   for(let i = arg.length - 1; i >= 0; i--){
     try{
       if(!fs.statSync(arg[i]).isDirectory()){
