@@ -28,7 +28,7 @@
   </head>
   <body>
     <div class="cfg">
-      <ul class="cfg_tab">
+      <ul class="cfg_tab" id="cfgTab">
         <li onclick="selectCfg('wx',this)">微信</li>
         <li onclick="selectCfg('bw',this)">浏览器</li>
         <li onclick="selectCfg('bd',this)">百度</li>
@@ -44,6 +44,7 @@
     <div class="info">
 
     </div>
+    <div class="build" id="build" onclick="build()">开始构建</div>
     <script src="./child.js"></script>
   </body>
 </html>

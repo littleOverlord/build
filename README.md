@@ -1,4 +1,4 @@
-# build
+# build v0.0.01
 ## npm
 ```
 npm install -g package --registry=https://registry.npm.taobao.org
@@ -24,3 +24,13 @@ key: devDependencies
 
 之后运行npm install --production或者注明NODE_ENV变量值为production时,会忽略devDependencies依赖
 ```
+
+## 功能
+    
+### 1.微信构建ts成es6(v0.0.1)
+### 2.微信排除没有spritesheet配置的png资源(v0.0.1)
+
+### 3.压缩json文件，生成解析配置(v0.0.2)
+### 4.监听文件，动态构建(v0.0.2)
+
+### 5.压缩js(v0.0.3)
