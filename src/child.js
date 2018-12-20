@@ -56,30 +56,30 @@ class Child{
         this.setBuildStatus(0);
     }
     //开始构建
-    start(callback){
+    start(){
         //删除目标老文件夹
         this.removeOld();
         //读取所有文件，并创建目标文件目录
         this.readDir("");
         //构建
-        this.build();
-        callback && callback()
+        this.loop();
     }
     //销毁
     destory(){
+        clearTimeout(this.timer);
         for(let k in this.watcher){
             this.watcher[k].close();
         }
     }
     //监听文件
-    watchHandler(dir){
+    watchHandler(fullPath){
         let _this = this;
         return (eventType, filename) => {
-            type = "modify";
-            if(eventType == "rename" && _this.watcher[filename]){
+            let type = "modify";
+            if(eventType == "rename" && _this.watcher[fullPath]){
                 type = "delete";
             }
-            _this.addTask(type,filename.replace(_this.currProject,""));
+            _this.addTask(type,fullPath.replace(_this.currProject,""));
         }
     }
     //初始化构建插件
@@ -137,7 +137,7 @@ class Child{
         }
         this.tasks[wf] = {type,file};
         if(type === "modify" && !this.watcher[wf]){
-            this.watcher[wf] = fs.watch(currProject, { encoding: 'utf8' }, this.watchHandler());
+            this.watcher[wf] = fs.watch(wf, { encoding: 'utf8' }, this.watchHandler(wf));
         }
         if(type === "delete" && this.watcher[wf]){
             this.watcher[wf].close();
@@ -187,7 +187,7 @@ class Child{
     }
     //单文件构建
     build(){
-        let bc, k;
+        let bc, k, t = Date.now();
         for(k in this.tasks){
             let task = this.tasks[k],
                 p = path.join(this.currProject,task.file),
@@ -203,18 +203,27 @@ class Child{
                 }
                 
             }
-            break;
-        }
-        if(this.removeTask(k) == 0){
-            this.setBuildStatus(5);
+            this.removeTask(k);
+            if(Date.now()-t >= 10){
+                break;
+            }
+            
         }
     }
+    //构建循环
     loop(){
+        if(this.taskCount > 0){
+            this.setBuildStatus(1);
+        }
+        this.build();
+        if(this.taskCount == 0){
+            this.setBuildStatus(5);
+        }
         this.timer = setTimeout(((_this) => {
             return () => {
-                _this.build();
+                _this.loop();
             }
-        })(this),1);
+        })(this),50);
     }
     //复制文件
     modify(src,dist){
@@ -226,6 +235,9 @@ class Child{
     }
     //设置构建状态
     setBuildStatus(status){
+        if(this.buildStatus == status){
+            return;
+        }
         this.buildStatus = status;
         this.infoBox.innerHTML = `${this.buildStatusCast[this.buildStatus]}`
     }
@@ -242,13 +254,15 @@ const init = () => {
     console.log("new Child");
     child.initPlugins(()=>{
         child.setBuildStatus(5);
+        child.start();
     });
 }
 
 
 
 /****************** 立即执行 ******************/
-
+//启动构建
+init();
 window.selectCfg = (arg,e) => {
     child.cfgTab.currNode && child.cfgTab.currNode.setAttribute("class","");
     if(child.cfgTab.currNode == e){
@@ -261,16 +275,10 @@ window.selectCfg = (arg,e) => {
     child.cfgTab.currNode.setAttribute("class","curr");
     console.log("selectCfg: ",arg,e,child.buildCfg);
 }
+//重启构建，清空之前的构建
 window.restart = (arg,e) => {
     child.destory();
     init();
-    if(child.buildStatus < 5){
-        return;
-    }
-    child.setBuildStatus(1);
-    child.start(()=>{
-        child.setBuildStatus(5);
-    });
 }
 // fs.writeFile(`${path.join(currProject,buildCfg[0].dist)}/a/b.json`,"test","utf8",(err) => {
 //     console.log("write back ",err);
