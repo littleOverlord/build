@@ -7,7 +7,7 @@ const babel = require("@babel/core");
 exports.modify = (data,relativePath,distPath,cfg) => {
     try{
         data = data.toString();
-        data = babel.transformSync(data, {
+        data = babel.transform(data, {
             presets: ['@babel/preset-typescript']
         })
     }catch(e){
