@@ -159,7 +159,7 @@ class Child{
             for(let j = 0, leng = this.buildCfg.length; j < leng; j++){
                 bc = this.buildCfg[j].plugins[ext];
                 if(bc && this.plugins[bc.mod]){
-                    this.plugins[bc.mod].modify(data,this.waiting[i],this.buildCfg[j].distAbsolute,bc);
+                    this.plugins[bc.mod].modify(data,p,this.waiting[i],this.buildCfg[j].distAbsolute,bc);
                 }else{
                     fs.copyFileSync(p,path.join(this.buildCfg[j].distAbsolute,this.waiting[i]))
                 }
