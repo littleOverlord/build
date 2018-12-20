@@ -22,3 +22,6 @@ exports.modify = (data,filename,relativePath,distPath,cfg) => {
     
     console.log("png");
 }
+exports.delete = (data,filename,relativePath,distPath,cfg) => {
+    removeAll(path.join(distPath,path.parse(relativePath).dir));
+}
