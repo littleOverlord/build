@@ -5,10 +5,9 @@ const path = require('path');
 const imagemin = require('imagemin');
 const imageminPngquant = require('imagemin-pngquant');
 
-exports.modify = (data,filename,relativePath,distPath,cfg) => {
+exports.modify = (filename,relativePath,distPath,cfg) => {
     try{
         if(fs.lstatSync(filename.replace(".png",".json"))){
-            console.log(filename,path.join(distPath,path.parse(relativePath).dir));
             // tinify.fromFile(filename).toFile(path.join(distPath,relativePath));
             imagemin([filename],path.join(distPath,path.parse(relativePath).dir),{
                 plugins: [
@@ -17,11 +16,15 @@ exports.modify = (data,filename,relativePath,distPath,cfg) => {
             })
         }
     }catch(e){
-        console.log(e);
+        console.log(`Skip modify ${filename}`,e.message);
     }
-    
-    console.log("png");
 }
-exports.delete = (data,filename,relativePath,distPath,cfg) => {
-    removeAll(path.join(distPath,path.parse(relativePath).dir));
+exports.delete = (filename,relativePath,distPath,cfg) => {
+    try{
+        if(fs.lstatSync(filename.replace(".png",".json"))){
+            removeAll(path.join(distPath,path.parse(relativePath).dir));
+        }
+    }catch(e){
+        console.log(`Skip delete ${filename}`,e.message);
+    }
 }

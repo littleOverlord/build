@@ -6,7 +6,8 @@ const babel = require("@babel/core");
 
 const { removeAll } = require('../ni/util');
 
-exports.modify = (data,filename,relativePath,distPath,cfg) => {
+exports.modify = (filename,relativePath,distPath,cfg) => {
+    let data = fs.readFileSync(filename);
     try{
         data = data.toString();
         data = babel.transform(data, {
@@ -23,6 +24,6 @@ exports.modify = (data,filename,relativePath,distPath,cfg) => {
     
     // console.log("ts2es5",data.es5.code);
 }
-exports.delete = (data,filename,relativePath,distPath,cfg) => {
+exports.delete = (filename,relativePath,distPath,cfg) => {
     removeAll(`${path.join(distPath,relativePath.replace(".ts",".js"))}`)
 }

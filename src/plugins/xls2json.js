@@ -2,6 +2,6 @@
 const fs = require('fs');
 const os = require('os');
 
-exports.modify = (data,relativePath,distPath,cfg) => {
-    console.log("xls2json",relativePath,distPath,data,cfg);
+exports.modify = (filename,relativePath,distPath,cfg) => {
+    console.log("xls2json",filename,relativePath,distPath,cfg);
 }

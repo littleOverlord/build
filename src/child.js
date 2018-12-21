@@ -14,11 +14,12 @@ let child;
 class Child{
     constructor(){
         //当前打开的项目路径 string
-        this.currProject  = ipcRenderer.sendSync("request","lastDir");
+        this.root  = ipcRenderer.sendSync("request","lastDir");
         /*构建配置表[
             {
                 "name": "wx",
                 "dist": "./dist/wx", //与打开项目的相对路径，遵循path.join
+                "ignore":["/README.md",...]
                 "plugins":{
                     "ts":{
                         "mod":"ts2es6"
@@ -33,7 +34,7 @@ class Child{
             },
             ...]
         */
-        this.buildCfg = require(`${this.currProject}/build.json`);
+        this.buildCfg = require(`${this.root}/build.json`);
         this.cfgTab = {
             currNode: null,
             currCfg: '' //wx(微信) bw(浏览器) bd(百度) pc(pc端)
@@ -43,6 +44,10 @@ class Child{
         this.tasks = {};
         this.taskCount = 0;
         this.dirCreated = {};
+        //所有文件列表
+        this.filesCache = {};
+        //所有项目文件夹
+        this.dirCache = {};
         this.buildStatusCast = {
             "0": "初始化中",
             "1": "构建中",
@@ -50,7 +55,12 @@ class Child{
         }
         this.infoBox = document.getElementById("info");
         for(let i = 0, len = this.buildCfg.length; i < len; i++){
-            this.buildCfg[i].distAbsolute = path.join(this.currProject,this.buildCfg[i].dist);
+            this.buildCfg[i].distAbsolute = path.join(this.root,this.buildCfg[i].dist);
+            if(this.buildCfg[i].ignore){
+                for(let j = 0,leng = this.buildCfg[i].ignore.length; j < leng; j++){
+                    this.buildCfg[i].ignore[j] = path.normalize(this.buildCfg[i].ignore[j]);
+                }
+            }
         }
         this.initTab();
         this.setBuildStatus(0);
@@ -61,7 +71,7 @@ class Child{
         this.removeOld();
         //读取所有文件，并创建目标文件目录
         this.readDir("");
-        //构建
+        //开始构建循环
         this.loop();
     }
     //销毁
@@ -72,14 +82,25 @@ class Child{
         }
     }
     //监听文件
-    watchHandler(fullPath){
+    watchHandler(dir){
         let _this = this;
         return (eventType, filename) => {
-            let type = "modify";
-            if(eventType == "rename" && _this.watcher[fullPath]){
+            console.log(eventType, filename);
+            let type = "modify",
+                p = path.join(dir,filename),
+                isdir = (eventType == "rename" && !_this.filesCache[p] && !_this.dirCache[p])?_this.isDir(p):_this.dirCache[p];
+            //判断是否文件
+            if(isdir && eventType == "change"){
+                return;
+            }
+            //新建文件夹
+            if(isdir && !_this.dirCache[p]){
+                return _this.readDir(p.replace(_this.root,""));
+            }
+            if(eventType == "rename" && _this.filesCache[p]){
                 type = "delete";
             }
-            _this.addTask(type,fullPath.replace(_this.currProject,""));
+            _this.addTask(type,p.replace(_this.root,""));
         }
     }
     //初始化构建插件
@@ -92,19 +113,21 @@ class Child{
                 let modName = path.parse(files[i]).name;
                 this.plugins[modName] = require(`./plugins/${modName}`);
             }
-            console.log(this.plugins);
+            // console.log(this.plugins);
             callback && callback();
         })
     }
     //读取文件夹,创建目标文件夹
     readDir(dir){
-        let files = fs.readdirSync(path.join(this.currProject,dir),"utf8"),p;
+        let ap = path.join(this.root,dir),
+            files = fs.readdirSync(ap,"utf8"),
+            p,fp;
+        this.addWatch(ap);
+        this.dirCache[ap] = files.length;
         for(let i = 0, len = files.length; i < len; i++){
-            if(files[i] == ".dist"){
-                continue;
-            }
-            p = `${dir}/${files[i]}`;
-            if(this.isDir(path.join(this.currProject,p))){
+            p = `${dir}${path.sep}${files[i]}`;
+            fp = path.join(this.root,p);
+            if(this.isDir(fp)){
                 this.createDistDir(p);
                 this.readDir(p); 
             }else{
@@ -117,6 +140,24 @@ class Child{
     isDir(p){
         let stat = fs.lstatSync(p);
         return stat.isDirectory();
+    }
+    //判断是否忽略
+    isIgnore(p,cfg){
+        let rp = p.replace(this.root,""),s,d,r;
+        for(let i = 0, len = cfg.ignore.length; i < len; i++){
+            s = rp.split(path.sep);
+            d = cfg.ignore[i].split(path.sep);
+            r = true;
+            for(let j = d.length - 1; j >= 0; j--){
+                if(d[j] !== s[j]){
+                    r = false;
+                }
+            }
+            if(r){
+                return true;
+            }
+        }
+        return false;
     }
     //删除老文件夹
     removeOld(){
@@ -131,18 +172,21 @@ class Child{
     //添加到任务池
     //@param type "modify" "delete"
     addTask(type,file){
-        let wf = path.join(this.currProject,file);
+        let wf = path.join(this.root,file);
         if(!this.tasks[wf]){
             this.taskCount += 1;
         }
         this.tasks[wf] = {type,file};
-        if(type === "modify" && !this.watcher[wf]){
-            this.watcher[wf] = fs.watch(wf, { encoding: 'utf8' }, this.watchHandler(wf));
+        if(type === "modify" && !this.filesCache[wf]){
+            this.filesCache[wf] = 1;
         }
-        if(type === "delete" && this.watcher[wf]){
-            this.watcher[wf].close();
-            delete this.watcher[wf];
+        if(type === "delete" && this.filesCache[wf]){
+            delete this.filesCache[wf];
         }
+    }
+    //添加文件夹监听
+    addWatch(dir){
+        this.watcher[dir] = fs.watch(dir, { encoding: 'utf8' }, this.watchHandler(dir));
     }
     //移除任务
     removeTask(key){
@@ -153,9 +197,13 @@ class Child{
     //创建文件夹
     createDistDir(p){
         for(let j = 0, leng = this.buildCfg.length; j < leng; j++){
+            if(this.isIgnore(p,this.buildCfg[j])){
+                continue;
+            }
             this.createDir(path.join(this.buildCfg[j].distAbsolute,p));
         }
     }
+    //逐层创建文件夹
     createDir(p){
         let arr = [],d;
         if(p != undefined){
@@ -172,7 +220,6 @@ class Child{
                 if(e.code !== "EEXIST"){
                     console.log(e);
                 }
-                
             }
             this.dirCreated[d] = 1;
         }
@@ -190,24 +237,25 @@ class Child{
         let bc, k, t = Date.now();
         for(k in this.tasks){
             let task = this.tasks[k],
-                p = path.join(this.currProject,task.file),
-                data = fs.readFileSync(p),
+                p = path.join(this.root,task.file),
                 ext = path.extname(task.file).replace(".","");
+            
             this.appendBuildInfo(`build ${p}, left ${this.taskCount-1} files!`)
             for(let j = 0, leng = this.buildCfg.length; j < leng; j++){
+                if(this.isIgnore(p,this.buildCfg[j])){
+                    continue;
+                }
                 bc = this.buildCfg[j].plugins[ext];
                 if(bc && this.plugins[bc.mod]){
-                    this.plugins[bc.mod][task.type](data,p,task.file,this.buildCfg[j].distAbsolute,bc);
+                    this.plugins[bc.mod][task.type](p,task.file,this.buildCfg[j].distAbsolute,bc);
                 }else{
                     this[task.type](p,path.join(this.buildCfg[j].distAbsolute,task.file))
                 }
-                
             }
             this.removeTask(k);
             if(Date.now()-t >= 10){
                 break;
             }
-            
         }
     }
     //构建循环
@@ -251,7 +299,6 @@ class Child{
 
 const init = () => {
     child = new Child();
-    console.log("new Child");
     child.initPlugins(()=>{
         child.setBuildStatus(5);
         child.start();
@@ -280,15 +327,15 @@ window.restart = (arg,e) => {
     child.destory();
     init();
 }
-// fs.writeFile(`${path.join(currProject,buildCfg[0].dist)}/a/b.json`,"test","utf8",(err) => {
+// fs.writeFile(`${path.join(root,buildCfg[0].dist)}/a/b.json`,"test","utf8",(err) => {
 //     console.log("write back ",err);
 // })
 
 //监听文件夹
-// watcher = fs.watch(currProject, { encoding: 'utf8' }, (eventType, filename) => {
-    // console.log(eventType,filename);
-    // if (filename) {
-    //   console.log(filename);
-      // 打印: <Buffer ...>
-    // }
+// fs.watch(child.root, { encoding: 'utf8' }, (eventType, filename) => {
+//     console.log(eventType,filename);
+//     if (filename) {
+//       console.log(filename);
+    //   打印: <Buffer ...>
+//     }
 // });
