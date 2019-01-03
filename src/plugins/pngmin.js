@@ -11,7 +11,7 @@ exports.modify = (filename,relativePath,distPath,cfg) => {
             // tinify.fromFile(filename).toFile(path.join(distPath,relativePath));
             imagemin([filename],path.join(distPath,path.parse(relativePath).dir),{
                 plugins: [
-                    imageminPngquant({quality: `${cfg.quality}-${cfg.quality}`})
+                    imageminPngquant({quality: `30-${cfg.quality}`})
                 ]
             })
         }
