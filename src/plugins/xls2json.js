@@ -49,8 +49,15 @@ class SeatMgr{
 }
 
 const paseSheet = (data,seat) => {
-    let keys = [],e,r = {},id = '',rid = [],index=3;
+    let keys = [],type = [],e,r = {},id = '',rid = [],index=3,t;
     while (e = data[seat.next()+"1"]){
+        if(e.v.indexOf("|") >= 0){
+            t = e.v.split("|");
+            type.push(t[1]);
+            e.v = t[0];
+        }else{
+            type.push(null);
+        }
         if(e.v.indexOf("!") === 0){
             rid.push(seat.curr);
             e.v = e.v.replace("!","");
@@ -70,6 +77,9 @@ const paseSheet = (data,seat) => {
             }
             if(rid.indexOf(seat.curr) >= 0){
                 id += e.v;
+            }
+            if(type[seat.nextIndex-1] == "object"){
+                e.v = JSON.parse(e.v);
             }
             es.push(e && e.v);
         }
