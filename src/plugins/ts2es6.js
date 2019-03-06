@@ -4,7 +4,7 @@ const path = require('path');
 
 const babel = require("@babel/core");
 
-const { removeAll } = require('../ni/util');
+const util = require('../ni/util');
 
 exports.modify = (filename,relativePath,distPath,cfg) => {
     let data = fs.readFileSync(filename);
@@ -18,6 +18,7 @@ exports.modify = (filename,relativePath,distPath,cfg) => {
         //     presets: ["@babel/preset-env"]
         // })
         fs.writeFileSync(`${path.join(distPath,relativePath.replace(".ts",".js"))}`,data.code,"utf8");
+        return util.createHash(data.code);
     }catch(e){
         console.log(e);
     }
@@ -25,5 +26,5 @@ exports.modify = (filename,relativePath,distPath,cfg) => {
     // console.log("ts2es5",data.es5.code);
 }
 exports.delete = (filename,relativePath,distPath,cfg) => {
-    removeAll(`${path.join(distPath,relativePath.replace(".ts",".js"))}`)
+    util.removeAll(`${path.join(distPath,relativePath.replace(".ts",".js"))}`)
 }

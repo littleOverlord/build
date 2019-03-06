@@ -1,7 +1,7 @@
 'use strict';
 /****************** 导入 ******************/
 const fs = require('fs');
-
+const crypto = require('crypto');
 /****************** 导出 ******************/
 //删除文件或者文件夹（包括子文件和子目录）
 exports.removeAll = (p) => {
@@ -31,6 +31,12 @@ exports.removeAll = (p) => {
           fs.unlinkSync(arr[i])
       }
   }
+}
+
+exports.createHash = (data) => {
+    const hash = crypto.createHash('sha256');
+    hash.update(data);
+    return hash.digest('hex');
 }
 
 /****************** 本地 ******************/
