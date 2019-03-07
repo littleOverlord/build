@@ -4,20 +4,37 @@ const os = require('os');
 
 const J = require('j');
 
-exports.modify = (filename,relativePath,distPath,cfg) => {
+const util = require('../ni/util');
+
+exports.modify = (filename,relativePath,bcfg,cfg,callback) => {
     let data = J.readFile(filename)[1].Sheets,i = 1000,
         seat = new SeatMgr(),
+        info = {},
         r = {};
+    info.path = relativePath.replace(/\.xls|\.xlsx/,".json");
+    info.sign = util.createHash(fs.readFileSync(filename,"utf8"));
+    if(bcfg.depend.dist[info.path] && bcfg.depend.dist[info.path].sign === info.sign){
+        return;
+    }
     console.log("xls2json",filename,data);
     try{
         for(let k in data){
             r[k] = paseSheet(data[k],seat);
         }
-        fs.writeFileSync(`${path.join(distPath,relativePath.replace(/\.xls|\.xlsx/,".json"))}`,JSON.stringify(r),"utf8");
+        r = JSON.stringify(r);
+        info.size = r.length;
+        
+        fs.writeFileSync(`${path.join(bcfg.distAbsolute,info.path)}`,JSON.stringify(r),"utf8");
+        callback(info);
     }catch(e){
         console.log(e);
     }
 }
+exports.delete = (filename,relativePath,bcfg,cfg,callback) => {
+    let info = {path: relativePath.replace(/\.xls|\.xlsx/,".json")};
+    util.removeAll(`${path.join(bcfg.distAbsolute,info.path)}`);
+    callback(info);
+} 
 
 class SeatMgr{
     constructor(){

@@ -5,7 +5,7 @@ const path = require('path');
 
 const { ipcRenderer, dialog } = require('electron');
 
-const { removeAll } = require('./ni/util');
+const { removeAll,readFileTryCatch, createHash } = require('./ni/util');
 
 /****************** 本地 ******************/
 //构建实例
@@ -13,6 +13,7 @@ let child;
 //构建类
 class Child{
     constructor(){
+        let _this = this;
         //当前打开的项目路径 string
         this.root  = ipcRenderer.sendSync("request","lastDir");
         /*构建配置表[
@@ -34,7 +35,20 @@ class Child{
             },
             ...]
         */
+        this.first = false;
         this.buildCfg = require(`${this.root}/build.json`);
+        readFileTryCatch(`${process.cwd()}/src/cfg/depend.json`,(err,data)=>{
+            if(err){
+                _this.first = true; 
+            }
+            _this.depend = err?{}:(()=>{
+                let d = JSON.parse(data.replace(/\//gi,"\\\\"));
+                for(let k in d){
+                    d[k] = 0;
+                }
+                return d;
+            })();
+        });
         this.cfgTab = {
             currNode: null,
             currCfg: '' //wx(微信) bw(浏览器) bd(百度) pc(pc端)
@@ -56,6 +70,11 @@ class Child{
         this.infoBox = document.getElementById("info");
         for(let i = 0, len = this.buildCfg.length; i < len; i++){
             this.buildCfg[i].distAbsolute = path.join(this.root,this.buildCfg[i].dist);
+            readFileTryCatch(`${this.buildCfg[i].distAbsolute}/${this.buildCfg[i].depend.name}`,(err,data)=>{
+                let r = err?"{}":data.replace(_this.buildCfg[i].depend.prev,"").replace(_this.buildCfg[i].depend.last,"").replace(/\//gi,"\\\\");
+                _this.buildCfg[i].depend.dist = JSON.parse(r);
+                
+            });
             if(this.buildCfg[i].ignore){
                 for(let j = 0,leng = this.buildCfg[i].ignore.length; j < leng; j++){
                     this.buildCfg[i].ignore[j] = path.normalize(this.buildCfg[i].ignore[j]);
@@ -67,10 +86,15 @@ class Child{
     }
     //开始构建
     start(){
+        console.log(this.buildCfg);
+        console.log(this.depend);
         //删除目标老文件夹
-        this.removeOld();
+        if(this.first){
+            this.removeOld();
+        }
         //读取所有文件，并创建目标文件目录
         this.readDir("");
+        this.compileDepend();
         //开始构建循环
         this.loop();
     }
@@ -133,7 +157,29 @@ class Child{
             }else{
             //    this.tasks.push(p); 
                this.addTask("modify",p);
+               this.depend[p] = 1;
             }
+        }
+    }
+    /**
+     * @description 对比老的depend，看是否有残留文件
+     */
+    compileDepend(){
+        for(let k in this.depend){
+            if(this.depend[k] == 0){
+                this.addTask("delete",k);
+                delete this.depend[k];
+            }
+        }
+    }
+    /**
+     * @description 写depend
+     */
+    writeDepend(){
+        fs.writeFileSync(`${process.cwd()}/src/cfg/depend.json`,JSON.stringify(this.depend).replace(/\\\\/gi,"/"),"utf8");
+        for(let i = 0, len = this.buildCfg.length; i < len; i++){
+            let s = this.buildCfg[i].depend.prev + JSON.stringify(this.buildCfg[i].depend.dist) + this.buildCfg[i].depend.last;
+            fs.writeFileSync(`${this.buildCfg[i].distAbsolute}/${this.buildCfg[i].depend.name}`,s.replace(/\\\\/gi,"/"),"utf8");
         }
     }
     //判断是否文件夹
@@ -179,8 +225,10 @@ class Child{
         this.tasks[wf] = {type,file};
         if(type === "modify" && !this.filesCache[wf]){
             this.filesCache[wf] = 1;
+            this.depend[file] = 1;
         }
         if(type === "delete" && this.filesCache[wf]){
+            delete this.depend[file];
             delete this.filesCache[wf];
         }
     }
@@ -247,9 +295,19 @@ class Child{
                 }
                 bc = this.buildCfg[j].plugins[ext];
                 if(bc && this.plugins[bc.mod]){
-                    this.plugins[bc.mod][task.type](p,task.file,this.buildCfg[j].distAbsolute,bc);
+                    this.plugins[bc.mod][task.type](p,task.file,this.buildCfg[j],bc,(result)=>{
+                        if(!result.size){
+                            return delete this.buildCfg[j].depend.dist[result.path];
+                        }
+                        this.buildCfg[j].depend.dist[result.path] = result;
+                    });
                 }else{
-                    this[task.type](p,path.join(this.buildCfg[j].distAbsolute,task.file))
+                    this[task.type](p,task.file,path.join(this.buildCfg[j].distAbsolute,task.file),(result)=>{
+                        if(!result.size){
+                            return delete this.buildCfg[j].depend.dist[result.path];
+                        }
+                        this.buildCfg[j].depend.dist[result.path] = result;
+                    })
                 }
             }
             this.removeTask(k);
@@ -265,6 +323,9 @@ class Child{
         }
         this.build();
         if(this.taskCount == 0){
+            if(this.buildStatus !== 5){
+                this.writeDepend();
+            }
             this.setBuildStatus(5);
         }
         this.timer = setTimeout(((_this) => {
@@ -274,12 +335,17 @@ class Child{
         })(this),50);
     }
     //复制文件
-    modify(src,dist){
+    modify(src,relative,dist,callback){
+        const info = {path:relative},data = fs.readFileSync(src,"utf8");
+        info.sign = createHash(data);
+        info.size = data.length;
         fs.copyFileSync(src,dist);
+        callback(info);
     }
     //删除文件
-    delete(src,dist){
+    delete(src,relative,dist,callback){
         removeAll(dist);
+        callback({path:relative});
     }
     //设置构建状态
     setBuildStatus(status){

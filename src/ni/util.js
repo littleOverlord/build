@@ -1,44 +1,73 @@
 'use strict';
 /****************** 导入 ******************/
 const fs = require('fs');
+const path = require('path');
 const crypto = require('crypto');
 /****************** 导出 ******************/
 //删除文件或者文件夹（包括子文件和子目录）
-exports.removeAll = (p) => {
-  let arr = [p];
-  let current = null;
-  let index = 0;
-
-  while(current = arr[index++]) {
-      // 读取当前文件，并做一个判断，文件目录分别处理
-      let stat = fs.statSync(current)
-      //如果文件是目录
-      if (stat.isDirectory()) {
-          //读取当前目录，拿到所有文件
-          let files = fs.readdirSync(current)
-          // 将文件添加到文件池
-          arr = [...arr, ...files.map(file => path.join(current, file))]
-      }
-  }
-  //遍历删除文件
-  for (var i = arr.length - 1; i >= 0; i--) {
-      // 读取当前文件，并做一个判断，文件目录分别处理
-      let stat = fs.statSync(arr[i])
-      // 目录和文件的删除方法不同
-      if (stat.isDirectory()) {
-          fs.rmdirSync(arr[i])
-      } else {
-          fs.unlinkSync(arr[i])
-      }
-  }
-}
-
+exports.removeAll = function(path) {
+    var files = [];
+    if( fs.existsSync(path) ) {
+        if(!fs.statSync(path).isDirectory()){
+            return fs.unlinkSync(path);
+        }
+        files = fs.readdirSync(path);
+        files.forEach(function(file,index){
+            var curPath = path + "/" + file;
+            if(fs.statSync(curPath).isDirectory()) { // recurse
+                deleteFolder(curPath);
+            } else { // delete file
+                fs.unlinkSync(curPath);
+            }
+        });
+        fs.rmdirSync(path);
+    }
+};
+/**
+ * @description 计算字符串哈希
+ */
 exports.createHash = (data) => {
     const hash = crypto.createHash('sha256');
     hash.update(data);
     return hash.digest('hex');
 }
-
+/**
+ * @description 同步异常捕获读取文件
+ */
+exports.readFileTryCatch = (_path,callback) => {
+    let data = "";
+    try{
+        data = fs.readFileSync(_path,"utf8");
+        callback(null,data);
+    }catch(e){
+        callback(e,null);
+    }
+}
+/**
+ * @description 查找es6||ts模块的依赖
+ * @param data 文件数据
+ * @param fp 文件路径
+ */
+exports.findDepends = (data,fp) => {
+    let m = data.match(/(import.+['"].+['"])/g),
+        pfObj = path.parse(fp),
+        pp,
+        r = [];
+    
+    if(!m){
+        return r;
+    }
+    for(let i = 0, len = m.length;i<len; i++){
+        pp = m[i].match(/[\'\"].+[\'\"]/)[0].replace(/'|"/g,"")+".js";
+        pp = path.join(pfObj.dir,pp);
+        
+        if(r.indexOf(pp) >= 0){
+            continue;
+        }
+        r.push(pp);
+    }
+    return r;
+}
 /****************** 本地 ******************/
 
 /****************** 立即执行 ******************/
