@@ -38,6 +38,7 @@ class Child{
         this.first = false;
         this.buildCfg = require(`${this.root}/build.json`);
         readFileTryCatch(`${process.cwd()}/src/cfg/depend.json`,(err,data)=>{
+            console.log(err,data);
             if(err){
                 _this.first = true; 
             }
@@ -49,6 +50,7 @@ class Child{
                 return d;
             })();
         });
+        
         this.cfgTab = {
             currNode: null,
             currCfg: '' //wx(微信) bw(浏览器) bd(百度) pc(pc端)
@@ -70,11 +72,15 @@ class Child{
         this.infoBox = document.getElementById("info");
         for(let i = 0, len = this.buildCfg.length; i < len; i++){
             this.buildCfg[i].distAbsolute = path.join(this.root,this.buildCfg[i].dist);
-            readFileTryCatch(`${this.buildCfg[i].distAbsolute}/${this.buildCfg[i].depend.name}`,(err,data)=>{
-                let r = err?"{}":data.replace(_this.buildCfg[i].depend.prev,"").replace(_this.buildCfg[i].depend.last,"").replace(/\//gi,"\\\\");
-                _this.buildCfg[i].depend.dist = JSON.parse(r);
-                
-            });
+            if(!this.first){
+                readFileTryCatch(`${this.buildCfg[i].distAbsolute}/${this.buildCfg[i].depend.name}`,(err,data)=>{
+                    let r = err?"{}":data.replace(_this.buildCfg[i].depend.prev,"").replace(_this.buildCfg[i].depend.last,"").replace(/\//gi,"\\\\");
+                    _this.buildCfg[i].depend.dist = JSON.parse(r);
+                    
+                });
+            }else{
+                this.buildCfg[i].depend.dist = {};
+            }
             if(this.buildCfg[i].ignore){
                 for(let j = 0,leng = this.buildCfg[i].ignore.length; j < leng; j++){
                     this.buildCfg[i].ignore[j] = path.normalize(this.buildCfg[i].ignore[j]);
@@ -88,9 +94,9 @@ class Child{
     start(){
         console.log(this.buildCfg);
         console.log(this.depend);
-        //删除目标老文件夹
         if(this.first){
             this.removeOld();
+            this.first = false;
         }
         //读取所有文件，并创建目标文件目录
         this.readDir("");

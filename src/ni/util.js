@@ -7,6 +7,7 @@ const crypto = require('crypto');
 //删除文件或者文件夹（包括子文件和子目录）
 exports.removeAll = function(path) {
     var files = [];
+    console.log(path);
     if( fs.existsSync(path) ) {
         if(!fs.statSync(path).isDirectory()){
             return fs.unlinkSync(path);
@@ -15,7 +16,12 @@ exports.removeAll = function(path) {
         files.forEach(function(file,index){
             var curPath = path + "/" + file;
             if(fs.statSync(curPath).isDirectory()) { // recurse
-                deleteFolder(curPath);
+                try{
+                    exports.removeAll(curPath);
+                }catch(e){
+                    console.log(e);
+                }
+                
             } else { // delete file
                 fs.unlinkSync(curPath);
             }
