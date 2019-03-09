@@ -23,10 +23,16 @@ exports.modify = (filename,relativePath,bcfg,cfg,callback) => {
             }).then((r)=>{
                 info.size = r[0].data.length;
                 callback(info);
+                console.log("minimg ok:",relativePath);
             })
+            console.log("minimg start:",relativePath);
+        }else{
+            callback(info);
         }
+        
     }catch(e){
-        console.log(`Skip modify ${filename}`,e.message);
+        // console.log(`Skip modify ${filename}`,e.message);
+        callback(info);
     }
 }
 exports.delete = (filename,relativePath,bcfg,cfg,callback) => {

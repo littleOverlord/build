@@ -59,6 +59,7 @@ class Child{
         this.watcher = {};
         this.tasks = {};
         this.taskCount = 0;
+        this.buildCount = 0;
         this.dirCreated = {};
         //所有文件列表
         this.filesCache = {};
@@ -185,7 +186,9 @@ class Child{
         fs.writeFileSync(`${process.cwd()}/src/cfg/depend.json`,JSON.stringify(this.depend).replace(/\\\\/gi,"/"),"utf8");
         for(let i = 0, len = this.buildCfg.length; i < len; i++){
             let s = this.buildCfg[i].depend.prev + JSON.stringify(this.buildCfg[i].depend.dist) + this.buildCfg[i].depend.last;
+            console.log(s);
             fs.writeFileSync(`${this.buildCfg[i].distAbsolute}/${this.buildCfg[i].depend.name}`,s.replace(/\\\\/gi,"/"),"utf8");
+            console.log("write depend ok!");
         }
     }
     //判断是否文件夹
@@ -299,9 +302,11 @@ class Child{
                 if(this.isIgnore(p,this.buildCfg[j])){
                     continue;
                 }
+                this.buildCount += 1;
                 bc = this.buildCfg[j].plugins[ext];
                 if(bc && this.plugins[bc.mod]){
                     this.plugins[bc.mod][task.type](p,task.file,this.buildCfg[j],bc,(result)=>{
+                        this.buildCount -= 1;
                         if(!result.size){
                             return delete this.buildCfg[j].depend.dist[result.path];
                         }
@@ -309,6 +314,7 @@ class Child{
                     });
                 }else{
                     this[task.type](p,task.file,path.join(this.buildCfg[j].distAbsolute,task.file),(result)=>{
+                        this.buildCount -= 1;
                         if(!result.size){
                             return delete this.buildCfg[j].depend.dist[result.path];
                         }
@@ -324,11 +330,11 @@ class Child{
     }
     //构建循环
     loop(){
-        if(this.taskCount > 0){
+        if(this.taskCount > 0 || this.buildCount > 0){
             this.setBuildStatus(1);
         }
         this.build();
-        if(this.taskCount == 0){
+        if(this.taskCount == 0 && this.buildCount == 0){
             if(this.buildStatus !== 5){
                 this.writeDepend();
             }
