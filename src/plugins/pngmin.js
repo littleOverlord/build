@@ -13,7 +13,7 @@ exports.modify = (filename,relativePath,bcfg,cfg,callback) => {
         if(fs.lstatSync(filename.replace(".png",".json"))){
             info.sign = util.createHash(fs.readFileSync(filename,"utf8"));
             if(bcfg.depend.dist[info.path] && bcfg.depend.dist[info.path].sign === info.sign){
-                return;
+                return callback(bcfg.depend.dist[info.path]);
             }
             // tinify.fromFile(filename).toFile(path.join(bcfg.distAbsolute,relativePath));
             imagemin([filename],path.join(bcfg.distAbsolute,path.parse(relativePath).dir),{

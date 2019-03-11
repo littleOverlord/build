@@ -12,7 +12,7 @@ exports.modify = (filename,relativePath,bcfg,pcfg,callback) => {
         data = data.toString();
         info.sign = util.createHash(data);
         if(bcfg.depend.dist[info.path] && bcfg.depend.dist[info.path].sign === info.sign){
-            return;
+            return callback(bcfg.depend.dist[info.path]);
         }
         info.depends = util.findDepends(data,info.path);
         data = babel.transform(data, {

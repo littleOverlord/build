@@ -186,7 +186,7 @@ class Child{
         fs.writeFileSync(`${process.cwd()}/src/cfg/depend.json`,JSON.stringify(this.depend).replace(/\\\\/gi,"/"),"utf8");
         for(let i = 0, len = this.buildCfg.length; i < len; i++){
             let s = this.buildCfg[i].depend.prev + JSON.stringify(this.buildCfg[i].depend.dist) + this.buildCfg[i].depend.last;
-            console.log(s);
+            // console.log(s);
             fs.writeFileSync(`${this.buildCfg[i].distAbsolute}/${this.buildCfg[i].depend.name}`,s.replace(/\\\\/gi,"/"),"utf8");
             console.log("write depend ok!");
         }

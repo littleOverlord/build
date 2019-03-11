@@ -9,12 +9,12 @@ const util = require('../ni/util');
 exports.modify = (filename,relativePath,bcfg,cfg,callback) => {
     let data = J.readFile(filename)[1].Sheets,i = 1000,
         seat = new SeatMgr(),
-        info = {},
+        info = {size:1},
         r = {};
     info.path = relativePath.replace(/\.xls|\.xlsx/,".json");
     info.sign = util.createHash(fs.readFileSync(filename,"utf8"));
     if(bcfg.depend.dist[info.path] && bcfg.depend.dist[info.path].sign === info.sign){
-        return;
+        return callback(bcfg.depend.dist[info.path]);
     }
     console.log("xls2json",filename,data);
     try{
