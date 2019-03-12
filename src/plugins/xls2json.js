@@ -24,7 +24,7 @@ exports.modify = (filename,relativePath,bcfg,cfg,callback) => {
         r = JSON.stringify(r);
         info.size = r.length;
         
-        fs.writeFileSync(`${path.join(bcfg.distAbsolute,info.path)}`,JSON.stringify(r),"utf8");
+        fs.writeFileSync(`${path.join(bcfg.distAbsolute,info.path)}`,r,"utf8");
         callback(info);
     }catch(e){
         console.log(e);
