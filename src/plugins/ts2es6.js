@@ -15,21 +15,20 @@ exports.modify = (filename,relativePath,bcfg,pcfg,callback) => {
             return callback(bcfg.depend.dist[info.path]);
         }
         info.depends = util.findDepends(data,info.path);
-        data = babel.transform(data, {
+        data = {code:data};
+        data.es6 = babel.transform(data.code, {
             filename,
-            presets: ['@babel/preset-typescript']
+            presets: [['@babel/preset-typescript']]
         })
-        // data.es5 = babel.transform(data.code,{
-        //     presets: ["@babel/preset-env"]
+        // data.es5 = babel.transform(data.es6.code,{
+        //     presets: [["@babel/preset-env",{"targets": "> 0.25%, not dead"}]]
         // })
-        info.size = data.code.length;
-        fs.writeFileSync(`${path.join(bcfg.distAbsolute,info.path)}`,data.code,"utf8");
+        info.size = data.es6.code.length;
+        fs.writeFileSync(`${path.join(bcfg.distAbsolute,info.path)}`,data.es6.code,"utf8");
         callback(info);
     }catch(e){
         console.log(e);
     }
-    
-    // console.log("ts2es5",data.es5.code);
 }
 exports.delete = (filename,relativePath,bcfg,cfg,callback) => {
     let info = {path: relativePath.replace(".ts",".js")};
