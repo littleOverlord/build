@@ -32,6 +32,7 @@ exports.modify = (filename,relativePath,bcfg,pcfg,callback) => {
         callback(info);
     }catch(e){
         console.log(e);
+        callback(info);
     }
     
     // console.log("ts2es5",data.es5.code);

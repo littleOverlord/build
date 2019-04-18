@@ -28,6 +28,7 @@ exports.modify = (filename,relativePath,bcfg,pcfg,callback) => {
         callback(info);
     }catch(e){
         console.log(e);
+        callback(info);
     }
 }
 exports.delete = (filename,relativePath,bcfg,cfg,callback) => {
