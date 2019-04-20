@@ -16,7 +16,16 @@ let wins = [],
     writeStatus: 0,
     waiting: 0
   },
-  lastDir;
+  lastDir,
+  senders = [];
+const addSender = (event) => {
+  senders.push(event);
+}
+const runSenders = (key,message) => {
+  for(let i = 0, len = senders.length; i < len; i++){
+    senders[i].sender.send(key, message);
+  }
+}
 //打开新窗口
 const createWindow = (index,dir) => {
   
@@ -36,7 +45,7 @@ const createWindow = (index,dir) => {
     wins.splice(wins.indexOf(win),1);
     console.log("wins.length = ",wins.length);
     if(wins.length == 1){
-      wins[0].show();
+      // wins[0].show();
       // wins[0].reload();
     }
   })
@@ -46,17 +55,23 @@ const createWindows = (arrs) => {
   if(wins.length == 1){
     console.log("close main window");
     //关闭主窗体
-    wins[0].hide();
+    // wins[0].hide();
   }
+  let idex;
   for(let i = 0, len = arrs.length; i < len; i++){
     createWindow("./src/child.html",arrs[i]);
+    idex = projects.data.indexOf(arrs[i]);
+    if(idex >= 0){
+      projects.data.splice(idex,1);
+      idex = null;
+    }
     projects.data.splice(0,0,arrs[i]);
   }
   if(projects.data.length > 10){
     projects.data.length = 10;
   }
   writeProjects();
-  
+  runSenders("historyProjects",projects.data);
 }
 //获取历史项目
 const readProjects = () => {
@@ -160,4 +175,7 @@ ipcMain.on('request', (event, arg) => {
   let args = arg.split("&");
   console.log(args);
   responseRequest[args[0]](event,args[1]);
+})
+ipcMain.on('asynMessage', (event, arg) => {
+  addSender(event);
 })

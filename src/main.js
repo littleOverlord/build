@@ -34,3 +34,8 @@ window.openDir = () => {
   // disk.selectObjectDir();
   ipcRenderer.send("request",'openDir');
 }
+ipcRenderer.send('asynMessage');
+ipcRenderer.on("historyProjects",(event, arg) => {
+  projects = arg;
+  addProjects();
+})
