@@ -37,8 +37,9 @@ class Child{
         */
         this.first = false;
         this.buildCfg = require(`${this.root}/build.json`);
+        document.head.querySelector("title").innerText = this.root;
         readFileTryCatch(`${process.cwd()}/src/cfg/depend.json`,(err,data)=>{
-            console.log(err,data);
+            // console.log(err,data);
             if(err){
                 _this.first = true; 
             }
@@ -382,7 +383,6 @@ const init = () => {
         child.start();
     });
 }
-
 
 
 /****************** 立即执行 ******************/
