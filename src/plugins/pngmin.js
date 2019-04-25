@@ -44,5 +44,6 @@ exports.delete = (filename,relativePath,bcfg,cfg,callback) => {
         }
     }catch(e){
         console.log(`Skip delete ${filename}`,e.message);
+        callback(info);
     }
 }
