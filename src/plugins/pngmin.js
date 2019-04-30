@@ -10,7 +10,7 @@ const util = require('../ni/util');
 exports.modify = (filename,relativePath,bcfg,cfg,callback) => {
     const info = {path:relativePath};
     try{
-        if(fs.lstatSync(filename.replace(".png",".json"))){
+        if(fs.lstatSync(filename.replace(/\.png/,".json"))){
             info.sign = util.createHash(fs.readFileSync(filename,"utf8"));
             if(bcfg.depend.dist[info.path] && bcfg.depend.dist[info.path].sign === info.sign){
                 return callback(bcfg.depend.dist[info.path]);
@@ -27,18 +27,19 @@ exports.modify = (filename,relativePath,bcfg,cfg,callback) => {
             })
             console.log("minimg start:",relativePath);
         }else{
+            console.log(`Skip modify ${filename}`);
             callback(info);
         }
         
     }catch(e){
-        // console.log(`Skip modify ${filename}`,e.message);
+        console.log(`Skip modify ${filename}`,e.message);
         callback(info);
     }
 }
 exports.delete = (filename,relativePath,bcfg,cfg,callback) => {
     let info = {path: relativePath};
     try{
-        if(fs.lstatSync(filename.replace(".png",".json"))){
+        if(fs.lstatSync(filename.replace(/\.png/,".json"))){
             removeAll(path.join(bcfg.distAbsolute,path.parse(relativePath).dir));
             callback(info);
         }
