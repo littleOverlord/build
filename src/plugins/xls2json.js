@@ -95,9 +95,7 @@ const paseSheet = (data,seat) => {
             if(rid.indexOf(seat.curr) >= 0){
                 id += e.v;
             }
-            if(type[seat.nextIndex-1] == "object"){
-                e.v = JSON.parse(e.v);
-            }
+            e.v = compileType(type[seat.nextIndex-1], e.v);
             es.push(e && e.v);
         }
         seat.reset();
@@ -112,5 +110,14 @@ const paseSheet = (data,seat) => {
     return {
         keys: keys,
         values: r
+    }
+}
+
+const compileType = (type,v) => {
+    switch(type){
+        case "object":
+            return JSON.parse(v);
+        default:
+         return v
     }
 }
