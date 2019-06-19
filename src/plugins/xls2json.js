@@ -80,6 +80,7 @@ const paseSheet = (data,seat,replace) => {
             e.v = t[0];
         }else{
             type.push(null);
+            arg.push(null);
         }
         if(e.v.indexOf("!") === 0){
             rid.push(seat.curr);

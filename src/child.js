@@ -349,10 +349,15 @@ class Child{
     }
     //复制文件
     modify(src,relative,dist,callback){
-        const info = {path:relative},data = fs.readFileSync(src,"utf8");
-        info.sign = createHash(data);
-        info.size = data.length;
-        fs.copyFileSync(src,dist);
+        let info = {path:relative},data;
+        try{
+            data = fs.readFileSync(src,"utf8");
+            info.sign = createHash(data);
+            info.size = data.length;
+            fs.copyFileSync(src,dist);
+        }catch(e){
+            console.log(e);
+        }
         callback(info);
     }
     //删除文件
