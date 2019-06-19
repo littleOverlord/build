@@ -66,11 +66,12 @@ class SeatMgr{
 }
 
 const paseSheet = (data,seat) => {
-    let keys = [],type = [],e,r = {},id = '',rid = [],index=3,t;
+    let keys = [],type = [],arg = [],e,r = {},id = '',rid = [],index=3,t;
     while (e = data[seat.next()+"1"]){
         if(e.v.indexOf("|") >= 0){
             t = e.v.split("|");
             type.push(t[1]);
+            arg.push(t[2]);
             e.v = t[0];
         }else{
             type.push(null);
@@ -95,7 +96,7 @@ const paseSheet = (data,seat) => {
             if(rid.indexOf(seat.curr) >= 0){
                 id += e.v;
             }
-            e.v = compileType(type[seat.nextIndex-1], e.v);
+            e.v = compileType(e.v, type[seat.nextIndex-1], arg[seat.nextIndex-1]);
             es.push(e && e.v);
         }
         seat.reset();
@@ -113,10 +114,12 @@ const paseSheet = (data,seat) => {
     }
 }
 
-const compileType = (type,v) => {
+const compileType = (v,type,arg) => {
     switch(type){
         case "object":
             return JSON.parse(v);
+        case "code":
+            return `function(${arg || ""}){return ${v};}`
         default:
          return v
     }
