@@ -10,7 +10,8 @@ exports.modify = (filename,relativePath,bcfg,cfg,callback) => {
     let data = J.readFile(filename)[1].Sheets,i = 1000,
         seat = new SeatMgr(),
         info = {size:1},
-        r = {};
+        r = {},
+        replace = {};
     info.path = relativePath.replace(/\.xls|\.xlsx/,".json");
     info.sign = util.createHash(fs.readFileSync(filename,"utf8"));
     if(bcfg.depend.dist[info.path] && bcfg.depend.dist[info.path].sign === info.sign){
@@ -19,9 +20,13 @@ exports.modify = (filename,relativePath,bcfg,cfg,callback) => {
     console.log("xls2json",filename,data);
     try{
         for(let k in data){
-            r[k] = paseSheet(data[k],seat);
+            r[k] = paseSheet(data[k],seat,replace);
         }
         r = JSON.stringify(r);
+        for(let k in replace){
+            let reg = new RegExp(k,"g");
+            r = r.replace(reg,replace[k]);
+        }
         info.size = r.length;
         
         fs.writeFileSync(`${path.join(bcfg.distAbsolute,info.path)}`,r,"utf8");
@@ -65,7 +70,7 @@ class SeatMgr{
     }
 }
 
-const paseSheet = (data,seat) => {
+const paseSheet = (data,seat,replace) => {
     let keys = [],type = [],arg = [],e,r = {},id = '',rid = [],index=3,t;
     while (e = data[seat.next()+"1"]){
         if(e.v.indexOf("|") >= 0){
@@ -96,7 +101,7 @@ const paseSheet = (data,seat) => {
             if(rid.indexOf(seat.curr) >= 0){
                 id += e.v;
             }
-            e.v = compileType(e.v, type[seat.nextIndex-1], arg[seat.nextIndex-1]);
+            e.v = compileType(e.v, type[seat.nextIndex-1], arg[seat.nextIndex-1],replace);
             es.push(e && e.v);
         }
         seat.reset();
@@ -114,12 +119,15 @@ const paseSheet = (data,seat) => {
     }
 }
 
-const compileType = (v,type,arg) => {
+const compileType = (v,type,arg,replace) => {
     switch(type){
         case "object":
             return JSON.parse(v);
         case "code":
-            return `function(${arg || ""}){return ${v};}`
+            let r = `function(${arg || ""}){return ${v};}`,
+                k = `"function(${arg || ""}){return ${v};}"`;
+            replace[k] = r;
+            return r;
         default:
          return v
     }
