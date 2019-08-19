@@ -1,4 +1,4 @@
-# build v0.0.01
+# build v0.0.1
 ## 开发心得
     记录从electorn 到babel构建代码的开发心得
 ### npm
@@ -66,7 +66,7 @@ data.es5 = babel.transform(data.code,{
 ### 微信排除没有spritesheet配置的png资源(v0.0.1) (ok)
 ### png图片压缩(v0.0.1) (ok)
 ### 监听文件，动态构建(v0.0.1) (ok)
-### 构建xls
+### 构建xls(v0.0.1) (ok)
 
 ### 压缩json文件，生成解析配置(v0.0.2)
 
