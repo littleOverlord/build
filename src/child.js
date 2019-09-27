@@ -118,6 +118,10 @@ class Child{
         let _this = this;
         return (eventType, filename) => {
             console.log(eventType, filename);
+            //过滤苹果隐藏文件
+            if(filename == ".DS_Store"){
+                return;
+            }
             let type = "modify",
                 p = path.join(dir,filename),
                 isdir = (eventType == "rename" && !_this.filesCache[p] && !_this.dirCache[p])?_this.isDir(p):_this.dirCache[p];
@@ -157,6 +161,10 @@ class Child{
         this.addWatch(ap);
         this.dirCache[ap] = files.length;
         for(let i = 0, len = files.length; i < len; i++){
+            //过滤苹果隐藏文件
+            if(files[i] == ".DS_Store"){
+                continue;
+            }
             p = `${dir}${path.sep}${files[i]}`;
             fp = path.join(this.root,p);
             if(this.isDir(fp)){
@@ -314,7 +322,7 @@ class Child{
                         this.buildCfg[j].depend.dist[result.path] = result;
                     });
                 }else{
-                    this[task.type](p,task.file,path.join(this.buildCfg[j].distAbsolute,task.file),(result)=>{
+                    this[task.type](p,task.file,this.buildCfg[j],(result)=>{
                         this.buildCount -= 1;
                         if(!result.size){
                             return delete this.buildCfg[j].depend.dist[result.path];
@@ -348,8 +356,9 @@ class Child{
         })(this),50);
     }
     //复制文件
-    modify(src,relative,dist,callback){
-        let info = {path:relative},data;
+    modify(src,relative,bcfg,callback){
+        let info = {path:relative},
+            dist = path.join(bcfg.distAbsolute,relative.replace(`.${bcfg.name}`,"")),data;
         try{
             data = fs.readFileSync(src,"utf8");
             info.sign = createHash(data);
@@ -361,7 +370,8 @@ class Child{
         callback(info);
     }
     //删除文件
-    delete(src,relative,dist,callback){
+    delete(src,relative,bcfg,callback){
+        let dist = path.join(bcfg.distAbsolute,relative.replace(`.${bcfg.name}`,""));
         removeAll(dist);
         callback({path:relative});
     }
