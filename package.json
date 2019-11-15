@@ -30,6 +30,7 @@
     "@babel/preset-stage-0": "^7.0.0",
     "@babel/preset-typescript": "^7.1.0",
     "electron": "^3.0.10",
+    "fontmin": "^0.9.8",
     "imagemin": "^6.0.0",
     "imagemin-pngquant": "^6.0.0",
     "j": "^1.0.0"
