@@ -2,3 +2,4 @@
 /node_modules
 /dist
 /src/cfg/depend.json
+/package-lock.json
