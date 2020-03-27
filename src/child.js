@@ -320,7 +320,7 @@ class Child{
                             return delete this.buildCfg[j].depend.dist[result.path];
                         }
                         this.buildCfg[j].depend.dist[result.path] = result;
-                    });
+                    },this);
                 }else{
                     this[task.type](p,task.file,this.buildCfg[j],(result)=>{
                         this.buildCount -= 1;
